@@ -1,0 +1,46 @@
+name: Pipeline de CI - Olá Mundo DevOps
+# Define quando o pipeline deve rodar
+on:
+  push:
+    branches: ["main"] # Apenas na branch main
+  pull_request:
+    branches: ["main"] # Rodar em todo pull request
+
+# O nome do "trabalho" (jobs) que o pipeline executará
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    # A máquina virtual que o job usará
+
+    steps:
+      # 1. Baixa o código do repositório para a máquina virtual
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      # 2. Configura o ambiente Node.js
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22" # Usamos a mesma versão do Dockerfile
+          cache: "npm" # Habilita o cache do npm para builds mais rápidos
+
+      # 3. Instala todas as dependências (incluindo devDependencies)
+      - name: Instalar Dependências
+        run: npm install
+
+      # 4. Executa os testes
+      - name: Rodar Testes
+        run: npm test
+
+      # 5. Configura o Docker Buildx (necessário para build)
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 6. Constrói (build) a imagem Docker
+      - name: Construir a Imagem Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: . # O contexto é o diretório atual
+          file: Dockerfile # O caminho para o Dockerfile
+          push: false # "false" significa apenas construir, não enviar
+          tags: app:latest # Um nome para a imagem
